@@ -36,7 +36,7 @@ LIBS= -lGL -lGLU -lglut -lstdc++ -lm
 ##
 #########################################################
 
-COMPILE= gcc -O2 $(INCLUDE_DIR)
+COMPILE= g++ -O2 $(INCLUDE_DIR)
 
 # COMPILE= gcc -g -I  $(INCLUDE_DIR)
 
@@ -55,7 +55,7 @@ OUTPUT=t1
 ##
 #########################################################
 
-OBJECTS= main.o
+OBJECTS= node.o line.o main.o
 
 
 #########################################################
@@ -64,9 +64,10 @@ OBJECTS= main.o
 ##
 #########################################################
 
-all : $(OUTPUT)
-	./t1
+all : compile run clean
 
+run : compile
+	./$(OUTPUT)
 
 #########################################################
 ##
@@ -74,7 +75,7 @@ all : $(OUTPUT)
 ##
 #########################################################
 
-$(OUTPUT) : $(OBJECTS)
+compile : $(OBJECTS)
 	$(COMPILE) $(OBJECTS) $(LIB_DIR) $(LIBS)   -o $(OUTPUT)
 
 
@@ -86,6 +87,12 @@ $(OUTPUT) : $(OBJECTS)
 
 main.o : main.cpp
 	$(COMPILE) -c main.cpp
+
+line.o : line.cpp
+	$(COMPILE) -c line.cpp
+
+node.o : node.cpp
+	$(COMPILE) -c node.cpp
 
 
 #########################################################
