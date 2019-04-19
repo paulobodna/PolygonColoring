@@ -1,17 +1,26 @@
 # PolygonColoring
 
-to use:
-    make
+Author: Paulo Bodnarchuki - 9790944
 
-Draw a polygon with left mouse button clicks. When finished, press the right button, and the polygon will be colored. To redo, just right-button click again.
+COMPILING
 
-
+to compile and run:
+    $make
 
 to run only:
-    make run
+    $make run
 
 to compile only:
-    make compile
+    $make compile
 
-to clean:
-    make clean
+
+HOW TO USE
+
+Draw a polygon with the left mouse button.
+When finished, press the right button (or 'w'), and the polygon will be colored. Right-click again to clear.
+
+Useful keys:
+'w' = color polygon
+'e' = erase the last vertex
+'r' = change painting color randomly
+'c' = clear the screen

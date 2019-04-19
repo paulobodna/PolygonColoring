@@ -47,7 +47,7 @@ COMPILE= g++ -O2 $(INCLUDE_DIR)
 ##
 #########################################################
 
-OUTPUT=t1
+OUTPUT=Filler
 
 #########################################################
 ##
@@ -64,18 +64,19 @@ OBJECTS= node.o line.o main.o
 ##
 #########################################################
 
-all : compile run clean
+all : $(OUTPUT) run clean
 
-run : compile
+run : $(OUTPUT)
 	./$(OUTPUT)
 
+compile : $(OUTPUT)
 #########################################################
 ##
 ##  The output program is dependant on the input objects
 ##
 #########################################################
 
-compile : $(OBJECTS)
+$(OUTPUT) : $(OBJECTS)
 	$(COMPILE) $(OBJECTS) $(LIB_DIR) $(LIBS)   -o $(OUTPUT)
 
 

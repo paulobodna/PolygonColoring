@@ -22,13 +22,20 @@
 #include <algorithm> // std::sort
 #include <vector> // std::vector
 #include <math.h>
+#include <time.h>
 #include "line.h"
 #include "node.h"
+
 
 #define XMAX_WINDOW 640
 #define YMAX_WINDOW 480
 
 int paint = 0;
+
+// color to fill the polygon
+int RED = 255;
+int GREEN = 0;
+int BLUE = 0;
 
 // a structure to hold a mouse click
 struct Click {
@@ -51,9 +58,43 @@ struct Click {
 	Click* next;
 };
 
-// the first and last elements in the queue.
-Click* first=0;
-Click* last=0;
+/// the top of the stack
+Click* top=0;
+
+//------------------------------------------------------------	Push()
+//
+/// pushes a new data element onto the stack
+void Push(int x,int y) {
+
+	// create a new click structure to hold our data
+	Click* p = new Click(x,y);
+
+	// set the current top of the stack to be the next
+	// of our new element.
+	p->next = top;
+
+	// set the top to the new element
+	top = p;
+}
+
+//------------------------------------------------------------	Pop()
+//
+/// removes the top element from the stack
+void Pop() {
+
+	// ignore an empty stack
+	if(!top)
+		return;
+
+	// store temp reference to the element on the top
+	Click* p = top;
+
+	// get the top to reference the item underneath it
+	top = top->next;
+
+	// delete the item
+	delete p;
+}
 
 /*------------------------------------------------------------	OnReshape()
 //
@@ -78,43 +119,11 @@ void OnReshape(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void Enqueue(int x,int y) {
-
-	// create a new click
-	Click* p = new Click(x,y);
-
-	// if queue if empty, set first and last to the new item
-	if(!first)
-		last = first = p;
-	else
-	// otherwise just insert into back of queue
-	{
-		last->next = p;
-		last = p;
-	}
-
+void restartColors() {
+    RED = 255;
+    GREEN = 0;
+    BLUE = 0;
 }
-
-/*------------------------------------------------------------	Dequeue()
-//
-//	removes an element from the front of the queue
-*/
-void Dequeue() {
-
-	// if queue's empty, nothing to remove
-	if(!first)
-		return;
-
-	// store a reference to the element at the front of the queue
-	Click* p = first;
-
-	// make the first pointer point to the second item in the queue
-	first = first->next;
-
-	// now safe to delete the item.
-    delete p;
-}
-
 //------------------------------------------------------------	OnMouseClick()
 void OnMouseClick(int button,int state,int x,int y) {
 
@@ -123,13 +132,13 @@ void OnMouseClick(int button,int state,int x,int y) {
 
 		// add the mouse x and y coord into the queue
 		if (button == GLUT_LEFT_BUTTON)
-			Enqueue(x,y);
+			Push(x,y);
 
-		// dequeue an element
+		// Pop an element
 		if (button == GLUT_RIGHT_BUTTON)
             if(paint) {
                 paint--;
-                while(first) Dequeue();
+                while(top) Pop();
             }
             else paint++;
 	}
@@ -146,7 +155,7 @@ void DrawClicks() {
 
 	// draw a line between all stored points
 	glBegin(GL_LINE_STRIP);
-	Click* curr = first;
+	Click* curr = top;
 
 	// while not at end of the queue
 	while (curr) {
@@ -158,7 +167,7 @@ void DrawClicks() {
 	glColor3f(1,0.5,0);
 
 	// draw all stored points
-	curr = first;
+	curr = top;
 	glBegin(GL_POINTS);
 	while (curr) {
 		glVertex2iv(curr->position);
@@ -276,6 +285,7 @@ void updateAET(std::vector<NODE> *aet, NODE **et, int varredura) {
         for(int i = (*aet).size()-1; i >= 0; i--) {
             if((*aet)[i].ymax == varredura) {
                 (*aet).erase((*aet).begin()+i);
+            
             }
         }
     }
@@ -300,7 +310,7 @@ void polygonFiller(LINE **lines, int lines_qtd) {
                
                    for(int x = begin; x < end; x++) {
 
-                       glColor3f(1,0,0);
+                       glColor3ub(RED, GREEN, BLUE);
                        glVertex2i(x, y);
 
                    }
@@ -325,7 +335,7 @@ void drawPolygon(LINE **lines, int lines_qtd) {
 void fromPointsToLines(LINE **lines, int lines_qtd) {
     if(lines_qtd == 0) return;
 
-    Click *p = first;
+    Click *p = top;
 
     int antx = p->position[0];
     int anty = p->position[1];
@@ -338,15 +348,15 @@ void fromPointsToLines(LINE **lines, int lines_qtd) {
     }
 
     lineMaker(lines[lines_qtd-1], antx, anty,
-                            first->position[0], first->position[1]);
+                            top->position[0], top->position[1]);
 }
 
 int queue_size() {
 	
-	if(!first)
+	if(!top)
 		return 0;
 
-	Click* p = first;
+	Click* p = top;
     int size = 0;
     while(p) {
         p = p->next;
@@ -394,6 +404,40 @@ void OnDraw() {
 	glutSwapBuffers();
 }
 
+void keyboard(unsigned char key, int posX, int posY ) {
+	switch( key ) {
+	case 'e' : case 'E' :
+        // erase
+        if(paint) paint--;
+        else Pop();
+
+        break;
+	case 'c' : case 'C' :
+        // clear
+	    if(paint) paint--;
+        while(top) Pop();
+        restartColors();
+
+        break;
+    case 'r' : case 'R' :
+        // recolor
+        RED = rand() % 256;
+        GREEN = rand() % 256;
+        BLUE = rand() % 256;
+
+        break;
+    case 'w' : case 'W' :
+        //Color polygon
+        if(!paint) paint++;
+
+        break;
+	default:
+		break;
+	}
+			
+	glutPostRedisplay();
+}
+
 //------------------------------------------------------------	OnInit()
 //
 void OnInit() {
@@ -405,8 +449,8 @@ void OnInit() {
 //
 void OnExit() {
     //esvazia fila de vertices
-    while(first) {
-        Dequeue();
+    while(top) {
+        Pop();
     }
 }
 
@@ -414,6 +458,7 @@ void OnExit() {
 //
 int main(int argc,char** argv) {
 
+    srand(time(NULL));
 	// initialise glut
 	glutInit(&argc,argv);
 
@@ -435,7 +480,9 @@ int main(int argc,char** argv) {
 	// set the idle callback
 	glutMouseFunc(OnMouseClick);
 	
-    // run our custom initialisation
+    glutKeyboardFunc(keyboard);
+    
+     // run our custom initialisation
 	OnInit();
 
 	// set the function to be called when we exit
